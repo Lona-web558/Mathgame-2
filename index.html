@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATH_ARCADE // real cash payouts</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #0a0e0d;
+    --panel: #121715;
+    --line: #1e2624;
+    --gold: #d4af37;
+    --gold-dim: #9c8a3f;
+    --cyan: #35d0c8;
+    --text: #d8e0dd;
+    --text-dim: #6d7a76;
+    --danger: #d4574a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+  }
+  .scanline-bg{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 24px; border-bottom:1px solid var(--line);
+    position:relative; z-index:1;
+  }
+  .logo{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:18px;
+    letter-spacing:0.5px; color:var(--gold);
+  }
+  .logo span{color:var(--cyan);}
+  .mode-tag{
+    font-size:11px; color:var(--text-dim); border:1px solid var(--line);
+    padding:3px 8px; border-radius:2px; letter-spacing:1px;
+  }
+  main{
+    max-width:640px; margin:0 auto; padding:32px 20px 80px;
+    position:relative; z-index:1;
+  }
+  .auth-card, .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:24px; margin-bottom:20px;
+  }
+  h1.hero{
+    font-family:'Space Grotesk', sans-serif; font-size:28px; font-weight:700;
+    margin:0 0 6px; letter-spacing:0.2px;
+  }
+  .hero-sub{ color:var(--text-dim); font-size:13px; margin:0 0 24px; line-height:1.6;}
+  label{ display:block; font-size:11px; color:var(--text-dim); letter-spacing:1px; margin:14px 0 6px; text-transform:uppercase;}
+  input{
+    width:100%; background:#0e1412; border:1px solid var(--line); color:var(--text);
+    padding:11px 12px; border-radius:4px; font-family:inherit; font-size:14px;
+    outline:none; transition:border-color .15s;
+  }
+  input:focus{ border-color:var(--cyan); }
+  .btn{
+    display:inline-block; width:100%; margin-top:18px; padding:12px 16px;
+    background:var(--gold); color:#0a0e0d; border:none; border-radius:4px;
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:14px;
+    cursor:pointer; letter-spacing:0.3px; transition:filter .15s, transform .1s;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn:active{ transform:scale(0.98); }
+  .btn.secondary{
+    background:transparent; color:var(--cyan); border:1px solid var(--cyan);
+  }
+  .btn.danger{ background:var(--danger); color:#fff; }
+  .link-row{ text-align:center; margin-top:14px; font-size:12px; color:var(--text-dim); }
+  .link-row a{ color:var(--cyan); text-decoration:none; cursor:pointer; }
+  .error-msg{ color:var(--danger); font-size:12px; margin-top:10px; min-height:16px; }
+  .success-msg{ color:var(--cyan); font-size:12px; margin-top:10px; min-height:16px; }
+
+  /* HUD */
+  .hud{
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;
+  }
+  .hud-cell{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:14px; text-align:center;
+  }
+  .hud-cell .val{
+    font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:700; color:var(--gold);
+  }
+  .hud-cell .val.cyan{ color:var(--cyan); }
+  .hud-cell .lbl{ font-size:10px; color:var(--text-dim); letter-spacing:1px; margin-top:4px; text-transform:uppercase;}
+
+  /* Game */
+  .equation{
+    font-family:'Space Grotesk', sans-serif; font-size:46px; font-weight:700;
+    text-align:center; padding:30px 0 10px; letter-spacing:2px;
+  }
+  .timer-track{
+    height:4px; background:var(--line); border-radius:2px; overflow:hidden; margin-bottom:24px;
+  }
+  .timer-fill{
+    height:100%; background:var(--cyan); width:100%; transition:width 1s linear;
+  }
+  .answer-row{ display:flex; gap:10px; }
+  .answer-row input{ text-align:center; font-size:18px; }
+  .feedback{
+    text-align:center; margin-top:16px; font-size:13px; min-height:20px; letter-spacing:0.3px;
+  }
+  .feedback.correct{ color:var(--cyan); }
+  .feedback.wrong{ color:var(--danger); }
+  .streak-note{ text-align:center; color:var(--text-dim); font-size:11px; margin-top:6px; }
+
+  /* Withdraw */
+  .balance-line{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;
+  }
+  .balance-line .amount{ font-family:'Space Grotesk', sans-serif; font-size:30px; color:var(--gold); font-weight:700;}
+  .withdraw-list{ margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
+  .withdraw-item{
+    display:flex; justify-content:space-between; font-size:12px; padding:8px 0;
+    border-bottom:1px solid var(--line); color:var(--text-dim);
+  }
+  .withdraw-item .status{ text-transform:uppercase; letter-spacing:0.5px; }
+  .status.submitted{ color:var(--cyan); }
+  .status.failed{ color:var(--danger); }
+  .status.pending{ color:var(--gold); }
+  .hidden{ display:none !important; }
+  .divider{ height:1px; background:var(--line); margin:20px 0; }
+  .section-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:14px;
+    letter-spacing:0.5px; margin-bottom:14px; color:var(--text);
+  }
+  .logout-btn{
+    background:none; border:1px solid var(--line); color:var(--text-dim);
+    font-family:inherit; font-size:11px; padding:6px 10px; border-radius:4px; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="scanline-bg"></div>
+
+<header>
+  <div class="logo">MATH<span>_</span>ARCADE</div>
+  <div class="mode-tag" id="modeTag">SIGN IN REQUIRED</div>
+</header>
+
+<main>
+
+  <!-- AUTH VIEW -->
+  <div id="authView">
+    <h1 class="hero">Solve. Earn. Cash out.</h1>
+    <p class="hero-sub">Every correct answer adds real dollars to your balance. Build a streak for a bonus multiplier, then withdraw straight to PayPal.</p>
+
+    <div class="auth-card" id="loginCard">
+      <div class="section-title">LOG IN</div>
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+      <button class="btn" onclick="handleLogin()">Enter arcade</button>
+      <div class="error-msg" id="loginError"></div>
+      <div class="link-row">No account? <a onclick="toggleAuth('register')">Create one</a></div>
+    </div>
+
+    <div class="auth-card hidden" id="registerCard">
+      <div class="section-title">CREATE ACCOUNT</div>
+      <label>Username</label>
+      <input type="text" id="regUsername" placeholder="mathwhiz">
+      <label>Email</label>
+      <input type="email" id="regEmail" placeholder="you@example.com">
+      <label>Password</label>
+      <input type="password" id="regPassword" placeholder="min. 6 characters">
+      <label>PayPal email (for withdrawals)</label>
+      <input type="email" id="regPaypalEmail" placeholder="same as above if unsure">
+      <button class="btn" onclick="handleRegister()">Create account</button>
+      <div class="error-msg" id="registerError"></div>
+      <div class="link-row">Already playing? <a onclick="toggleAuth('login')">Log in</a></div>
+    </div>
+  </div>
+
+  <!-- GAME VIEW -->
+  <div id="gameView" class="hidden">
+    <div class="hud">
+      <div class="hud-cell"><div class="val" id="hudBalance">$0.00</div><div class="lbl">Balance</div></div>
+      <div class="hud-cell"><div class="val cyan" id="hudStreak">0</div><div class="lbl">Streak</div></div>
+      <div class="hud-cell"><div class="val" id="hudBest">0</div><div class="lbl">Best streak</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">SOLVE THE EQUATION <button class="logout-btn" style="float:right" onclick="logout()">Log out</button></div>
+      <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="equation" id="equationText">— — —</div>
+      <div class="answer-row">
+        <input type="number" id="answerInput" placeholder="your answer" onkeydown="if(event.key==='Enter') submitAnswer()">
+        <button class="btn" style="width:auto; white-space:nowrap; margin-top:0;" onclick="submitAnswer()">Submit</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="streak-note" id="streakNote"></div>
+      <button class="btn secondary" style="margin-top:20px;" onclick="loadQuestion()">New equation</button>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">WITHDRAW TO PAYPAL</div>
+      <div class="balance-line">
+        <span class="amount" id="withdrawBalanceDisplay">$0.00</span>
+        <span style="font-size:11px; color:var(--text-dim);">available</span>
+      </div>
+      <label>Amount (USD)</label>
+      <input type="number" step="0.01" id="withdrawAmount" placeholder="min. $5.00">
+      <label>PayPal email</label>
+      <input type="email" id="withdrawPaypalEmail" placeholder="you@example.com">
+      <button class="btn" onclick="submitWithdrawal()">Request payout</button>
+      <div class="error-msg" id="withdrawError"></div>
+      <div class="success-msg" id="withdrawSuccess"></div>
+
+      <div class="withdraw-list" id="withdrawList"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const API = ''; // same origin
+let token = localStorage.getItem('mathArcadeToken') || null;
+let currentUser = null;
+let timerInterval = null;
+let timeLeft = 30;
+
+function toggleAuth(which){
+  document.getElementById('loginCard').classList.toggle('hidden', which !== 'login');
+  document.getElementById('registerCard').classList.toggle('hidden', which !== 'register');
+}
+
+async function apiCall(path, method='GET', body=null){
+  const headers = {'Content-Type':'application/json'};
+  if(token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API + path, {
+    method, headers, body: body ? JSON.stringify(body) : null
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || 'Something went wrong');
+  return data;
+}
+
+async function handleRegister(){
+  const errorEl = document.getElementById('registerError');
+  errorEl.textContent = '';
+  try{
+    const data = await apiCall('/api/register', 'POST', {
+      username: document.getElementById('regUsername').value.trim(),
+      email: document.getElementById('regEmail').value.trim(),
+      password: document.getElementById('regPassword').value,
+      paypalEmail: document.getElementById('regPaypalEmail').value.trim()
+    });
+    onAuthSuccess(data);
+  }catch(err){ errorEl.textContent = err.message; }
+}
+
+async function handleLogin(){
+  const errorEl = document.getElementById('loginError');
+  errorEl.textContent = '';
+  try{
+    const data = await apiCall('/api/login', 'POST', {
+      email: document.getElementById('loginEmail').value.trim(),
+      password: document.getElementById('loginPassword').value
+    });
+    onAuthSuccess(data);
+  }catch(err){ errorEl.textContent = err.message; }
+}
+
+function onAuthSuccess(data){
+  token = data.token;
+  localStorage.setItem('mathArcadeToken', token);
+  currentUser = data.user;
+  document.getElementById('authView').classList.add('hidden');
+  document.getElementById('gameView').classList.remove('hidden');
+  document.getElementById('modeTag').textContent = 'PLAYING · ' + currentUser.username;
+  refreshHud();
+  loadQuestion();
+  loadWithdrawals();
+}
+
+function logout(){
+  token = null;
+  localStorage.removeItem('mathArcadeToken');
+  clearInterval(timerInterval);
+  document.getElementById('gameView').classList.add('hidden');
+  document.getElementById('authView').classList.remove('hidden');
+  document.getElementById('modeTag').textContent = 'SIGN IN REQUIRED';
+}
+
+function refreshHud(){
+  document.getElementById('hudBalance').textContent = '$' + currentUser.balanceUsd.toFixed(2);
+  document.getElementById('withdrawBalanceDisplay').textContent = '$' + currentUser.balanceUsd.toFixed(2);
+  document.getElementById('hudStreak').textContent = currentUser.currentStreak;
+  document.getElementById('hudBest').textContent = currentUser.bestStreak;
+}
+
+async function loadQuestion(){
+  clearInterval(timerInterval);
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('answerInput').value = '';
+  try{
+    const data = await apiCall('/api/game/question', 'POST');
+    document.getElementById('equationText').textContent = data.question + ' = ?';
+    document.getElementById('streakNote').textContent = 'Difficulty level ' + data.difficultyLevel;
+    timeLeft = data.timeLimitSeconds;
+    updateTimerBar();
+    timerInterval = setInterval(()=>{
+      timeLeft -= 1;
+      updateTimerBar();
+      if(timeLeft <= 0){ clearInterval(timerInterval); }
+    }, 1000);
+    document.getElementById('answerInput').focus();
+  }catch(err){
+    document.getElementById('equationText').textContent = 'error loading question';
+  }
+}
+
+function updateTimerBar(){
+  const pct = Math.max(0, (timeLeft/30)*100);
+  document.getElementById('timerFill').style.width = pct + '%';
+}
+
+async function submitAnswer(){
+  const val = document.getElementById('answerInput').value;
+  if(val === '') return;
+  try{
+    const data = await apiCall('/api/game/submit', 'POST', { answer: Number(val) });
+    clearInterval(timerInterval);
+    const fb = document.getElementById('feedback');
+    if(data.correct){
+      fb.textContent = `Correct! +$${data.earnedUsd.toFixed(4)}`;
+      fb.className = 'feedback correct';
+    }else{
+      fb.textContent = data.expired
+        ? `Time's up. Answer was ${data.correctAnswer}`
+        : `Not quite. Answer was ${data.correctAnswer}`;
+      fb.className = 'feedback wrong';
+    }
+    currentUser.balanceUsd = data.balanceUsd;
+    currentUser.currentStreak = data.currentStreak;
+    currentUser.bestStreak = data.bestStreak;
+    refreshHud();
+    setTimeout(loadQuestion, 1400);
+  }catch(err){
+    document.getElementById('feedback').textContent = err.message;
+    document.getElementById('feedback').className = 'feedback wrong';
+  }
+}
+
+async function submitWithdrawal(){
+  const errorEl = document.getElementById('withdrawError');
+  const successEl = document.getElementById('withdrawSuccess');
+  errorEl.textContent = ''; successEl.textContent = '';
+  const amountUsd = parseFloat(document.getElementById('withdrawAmount').value);
+  const paypalEmail = document.getElementById('withdrawPaypalEmail').value.trim();
+  if(!paypalEmail){ errorEl.textContent = 'PayPal email is required'; return; }
+  try{
+    const data = await apiCall('/api/withdraw', 'POST', { amountUsd, paypalEmail });
+    successEl.textContent = 'Payout submitted to PayPal.';
+    currentUser.balanceUsd = data.balanceUsd;
+    refreshHud();
+    document.getElementById('withdrawAmount').value = '';
+    loadWithdrawals();
+  }catch(err){
+    errorEl.textContent = err.message;
+  }
+}
+
+async function loadWithdrawals(){
+  try{
+    const data = await apiCall('/api/withdrawals', 'GET');
+    const list = document.getElementById('withdrawList');
+    list.innerHTML = '';
+    data.withdrawals.slice().reverse().forEach(w=>{
+      const row = document.createElement('div');
+      row.className = 'withdraw-item';
+      const date = new Date(w.createdAt).toLocaleDateString();
+      row.innerHTML = `<span>${date} · $${w.amountUsd.toFixed(2)} → ${w.paypalEmail}</span><span class="status ${w.status}">${w.status}</span>`;
+      list.appendChild(row);
+    });
+  }catch(err){ /* silent */ }
+}
+
+// Auto-login if a token is already stored
+(async function init(){
+  if(token){
+    try{
+      const data = await apiCall('/api/me', 'GET');
+      onAuthSuccess({ token, user: data.user });
+    }catch(err){
+      logout();
+    }
+  }
+})();
+</script>
+</body>
+</html>

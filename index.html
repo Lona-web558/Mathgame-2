@@ -362,7 +362,7 @@ async function submitWithdrawal(){
   if(!paypalEmail){ errorEl.textContent = 'PayPal email is required'; return; }
   try{
     const data = await apiCall('/api/withdraw', 'POST', { amountUsd, paypalEmail });
-    successEl.textContent = 'Payout submitted to PayPal.';
+    successEl.textContent = 'Withdrawal request received.';
     currentUser.balanceUsd = data.balanceUsd;
     refreshHud();
     document.getElementById('withdrawAmount').value = '';
